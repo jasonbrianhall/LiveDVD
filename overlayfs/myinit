@@ -1,0 +1,69 @@
+#!/bin/busybox sh
+
+# Dump to sh if something fails
+error() {
+	echo "Jumping into the shell..."
+	setsid cttyhack sh
+}
+
+ignore() {
+	echo "Ignoring Modprobe Error"
+}
+
+
+source ./modprobe.sh || ignore > /dev/null 2> /dev/null
+
+# Populate /bin with binaries from busybox
+/bin/busybox --install /bin || error
+
+mkdir -p /proc || error
+mount -t proc proc /proc || error
+
+mkdir -p /sys || error
+mount -t sysfs sysfs /sys || error
+
+mkdir -p /sys/dev || error
+mkdir -p /var/run || error
+mkdir -p /dev || error
+
+mkdir -p /dev/pts || error
+mount -t devpts devpts /dev/pts || error
+
+# Populate /dev
+#mkdir -p /proc/sys/kernel
+#echo /bin/mdev > /proc/sys/kernel/hotplug
+mdev -s
+
+mkdir -p /newroot || error
+mount -t tmpfs tmpfs /newroot || error
+
+mkdir -p /cdroot || error
+mkdir -p /overlay || error
+
+mkdir -p /newroot/upper || error
+mkdir -p /newroot/workdir || error
+
+mount /dev/sr0 /cdroot || error
+
+mknod /dev/loop0 b 7 0
+
+mkdir -p /squash
+mount /cdroot/newroot/root.squash /squash -t squashfs
+
+mount -t overlay -o lowerdir=/squash,upperdir=/newroot/upper,workdir=/newroot/workdir none /overlay || error
+
+
+#echo "Extracting rootfs... "
+#cat rootfs.tar | tar -x -f - -C /newroot || error
+
+mount --move /sys /overlay/sys || error
+mount --move /proc /overlay/proc || error
+#mount --move /dev /overlay/dev || error
+
+cp /etc/rc.d/rc.local /overlay/etc/rc.d/rc.local -f
+chmod +x /overlay/etc/rc.d/rc.local
+echo "SELINUX=disabled" > /overlay/etc/selinux/config
+echo "" > /overlay/etc/fstab
+
+
+exec switch_root /overlay /sbin/init || error
