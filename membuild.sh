@@ -1,6 +1,6 @@
 #!/bin/bash
 
-rm grub/newroot -R -f
+rm grub-memdisk/newroot -R -f
 
 mkdir -p overlayroot
 mount -t tmpfs tmpfs overlayroot
