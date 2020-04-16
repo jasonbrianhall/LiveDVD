@@ -177,6 +177,7 @@ else
 fi
 
 if [ "$membuild" -eq 1 ]; then
+	echo -e "In Membuild"
 	mountOverlay
 	if [ $skipmakingsquash -eq 0 ]; then
 		pushd overlay
@@ -198,7 +199,6 @@ if [ "$membuild" -eq 1 ]; then
 	fi
 		tar cf ../initramfs/rootfs.tar --exclude="boot" .
 		popd
-	fi
 	echo -e "\nBuilding Initial RAM Disk"
 	pushd initramfs
 	buildInitMem
@@ -219,9 +219,8 @@ if [ "$membuild" -eq 1 ]; then
 	grub2-mkrescue -o result/membuild.iso grub-memdisk/
 	echo -e "\n\nMemdisk Build Complete; saved to result/membuild.iso"
 	unmountOverlay
-	exit 0
-
 elif [ "$useguestfish" -eq 0 ]; then
+	echo -e "\nNot using guestfish"
 	mountOverlay
 	if [ $skipmakingsquash -eq 0 ]; then
 		pushd overlay
@@ -257,7 +256,6 @@ elif [ "$useguestfish" -eq 0 ]; then
 	grub2-mkrescue -o result/overlay.iso grub-overlay/
 	echo -e "\n\nOverlay Build Complete; saved to result/overlay.iso"
 	unmountOverlay
-	exit 0
 else
 	echo -e "\nUsing GuestFish"
 	if [ $skipmakingsquash -eq 0 ]; then
@@ -300,6 +298,5 @@ __EOF__
 
 	grub2-mkrescue -o result/overlay-gf.iso grub-overlay/
 	echo -e "\n\nOverlay Build Complete Using Guest Fish; saved to result/overlay-gf.iso"
-	exit 0
 fi
 
