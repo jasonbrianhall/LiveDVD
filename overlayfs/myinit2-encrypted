@@ -48,9 +48,11 @@ mount /dev/sr0 /cdroot || error
 mknod /dev/loop0 b 7 0
 
 mkdir -p /squash
-mount /cdroot/newroot/root.squash /squash -t squashfs
+/sbin/cryptsetup luksOpen /cdroot/newroot/encrypted cr_temp || error
+mount /dev/mapper/cr_temp /squash -t squashfs
 
 mount -t overlay -o lowerdir=/squash,upperdir=/newroot/upper,workdir=/newroot/workdir none /overlay || error
+
 
 mount --move /sys /overlay/sys || error
 mount --move /proc /overlay/proc || error

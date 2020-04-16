@@ -13,7 +13,8 @@ mount -t overlay -o lowerdir=newroot,upperdir=overlayroot/upper,workdir=overlayr
 
 
 pushd overlay
-cp ../rc/rc.local etc/rc.d/local
+cp ../rc/rc.local etc/rc.d/rc.local
+chmod +x etc/rc.d/rc.local
 echo "SELINUX=disabled" > etc/selinux/config
 tar cf ../initramfs/rootfs.tar --exclude="boot" .
 popd
@@ -26,4 +27,3 @@ find . -print0 | cpio --null -ov --format=newc | gzip -9 > ../grub-memdisk/boot/
 popd
 
 grub2-mkrescue -o result/membuild.iso grub-memdisk/
-
