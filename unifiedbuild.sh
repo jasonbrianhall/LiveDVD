@@ -44,8 +44,8 @@ function usage()
 				This Help File"				
 }
 
-function buildInit() {
-	source $originaldirectory/buildInit.sh
+function buildInitOverlay() {
+	source $originaldirectory/buildInitOverlay.sh
 }
 
 function buildInitMem() {
@@ -240,7 +240,7 @@ elif [ "$useguestfish" -eq 0 ]; then
 			popd
 		fi
 	fi
-	buildInit
+	buildInitOverlay
 	chmod +x init
 	mv init overlayfs -f
 	pushd overlayfs
@@ -281,7 +281,7 @@ __EOF__
 	fi
 	echo "Building Init"
 	pushd overlayfs
-	buildInitMem
+	buildInitOverlay
 	chmod +x init
 
 	mkdir -p ../grub-overlay/boot/$producttype

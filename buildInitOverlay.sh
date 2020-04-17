@@ -87,11 +87,10 @@ mount -t overlay -o lowerdir=/squash,upperdir=/newroot/upper,workdir=/newroot/wo
 mount --move /sys /overlay/sys || error
 mount --move /proc /overlay/proc || error
 
-# DHCP for RHEL
 EOF
-if [ $membuild -eq 0 ]; then
 	if [ $skipdhcpscript -eq 0 ]; then
 		cat << EOF >> init
+# DHCP for RHEL
 cp ../rc/rc.local etc/rc.d/rc.local
 chmod +x etc/rc.d/rc.local
 EOF
@@ -114,7 +113,6 @@ EOF
 	cat << EOF >> init
 		echo "" > /overlay/etc/fstab
 EOF
-fi
 fi
 cat << EOF >> init
 exec switch_root /overlay /sbin/init || error
