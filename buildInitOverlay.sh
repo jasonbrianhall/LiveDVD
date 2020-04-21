@@ -91,8 +91,8 @@ EOF
 	if [ $skipdhcpscript -eq 0 ]; then
 		cat << EOF >> init
 # DHCP for RHEL
-cp ../rc/rc.local etc/rc.d/rc.local
-chmod +x etc/rc.d/rc.local
+cp /etc/rc.d/rc.local /overlay/etc/rc.d/rc.local
+chmod +x /overlay/etc/rc.d/rc.local
 EOF
 	fi
 
