@@ -1,5 +1,7 @@
-#!/bin/bash 2> /dev/null
+#!/bin/bash
 modprobe ahci > /dev/null 2> /dev/null
+modprobe ata_generic > /dev/null 2> /dev/null
+modprobe ata_piix
 modprobe binfmt_misc > /dev/null 2> /dev/null
 modprobe bridge > /dev/null 2> /dev/null
 modprobe cdc_ether > /dev/null 2> /dev/null
@@ -61,6 +63,7 @@ modprobe ip_tables > /dev/null 2> /dev/null
 modprobe ipt_MASQUERADE > /dev/null 2> /dev/null
 modprobe ipt_REJECT > /dev/null 2> /dev/null
 modprobe irqbypass > /dev/null 2> /dev/null
+modprobe iscsi_boot > /dev/null 2> /dev/null
 modprobe iscsi_boot_sysfs > /dev/null 2> /dev/null
 modprobe iscsi_target_mod > /dev/null 2> /dev/null
 modprobe iscsi_tcp > /dev/null 2> /dev/null
