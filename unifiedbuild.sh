@@ -148,6 +148,9 @@ if [ $# -gt 0 ]; then
                 esac
                 shift
         done
+else
+	usage
+	exit 1
 fi
 
 if [ "$productentered" -eq 0 ] &&  [ "$usekernel" -eq 0 ]; then
