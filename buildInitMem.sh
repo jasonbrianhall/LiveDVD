@@ -1,5 +1,5 @@
 cat << EOF > init
-#!/bin/busybox sh
+#!/bin/bash
 
 # Dump to sh if something fails
 error() {
@@ -7,8 +7,6 @@ error() {
 	setsid cttyhack sh
 }
 
-# Populate /bin with binaries from busybox
-/bin/busybox --install /bin
 
 mkdir -p /proc
 mount -t proc proc /proc
@@ -23,9 +21,7 @@ mkdir -p /dev
 mkdir -p /dev/pts
 mount -t devpts devpts /dev/pts
 
-# Populate /dev
-echo /bin/mdev > /proc/sys/kernel/hotplug
-mdev -s
+mount -t devtmpfs none /dev
 
 mkdir -p /newroot
 mount -t tmpfs tmpfs /newroot || error
@@ -37,5 +33,6 @@ mount --move /sys /newroot/sys
 mount --move /proc /newroot/proc
 mount --move /dev /newroot/dev
 
-exec switch_root /newroot /sbin/init || error
+exec /sbin/chroot /overlay /sbin/init
+
 EOF

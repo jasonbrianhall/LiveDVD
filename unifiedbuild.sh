@@ -16,32 +16,50 @@ skipdhcpscript=0
 productentered=0
 originaldirectory=$(pwd)
 skipmakingsquash=0
+useyum=0
 #File Usage
 function usage()
 {
         echo "usage: 
-                        -m | --membuild
-				Memory build; Put everything in memory (Requires atleast twice as much memory as the ISO image); makes a TAR from newroot
-                        -o | --overlaybuild
-				Overlay build; Only put changes in memory; makes a SquashFS from newroot; may not support SELINUX
-                        -s | --selinux
-				Keep SELinux Settings
-                        -l | --luks Password
-				Makes an Encrypted DVD with Set Password
-                        -r | --rootpassword Password
-				Attempts to Change Root Password
-                        -g | --guestfish imagename
-				Mounts a .raw, .qcow2, or other supported image and makes a Squashfs (support XATTR which may allow it to boot with SELinux); only supported with -o
-			-k | --kernel imagename
-				Copy this kernel (program assumes you have the kernel in the right location)
-			-t | --title Software Title (Defaults to \"$grubtitledefault\")
-				Copy this kernel (program assumes you have the kernel in the right location)
-			-p | --producttype name 
-				Creates a Directory in Grub for OS Type (Defaults to \"$producttypeedefault\")
-			-q | --quick 
-				Skips making squash or initrd for memdisk (assumes already made from previous run); useful for making changes to the code
-                        -h | --help
-				This Help File"				
+	-m | --membuild
+		Memory build; Put everything in memory (Requires atleast twice as much memory as the ISO image); makes a TAR from newroot
+	-o | --overlaybuild
+		Overlay build; Only put changes in memory; makes a SquashFS from newroot; may not support SELINUX
+	-s | --selinux
+		Keep SELinux Settings
+	-l | --luks Password
+		Makes an Encrypted DVD with Set Password
+	-r | --rootpassword Password
+		Attempts to Change Root Password
+	-g | --guestfish imagename
+		Mounts a .raw, .qcow2, or other supported image and makes a Squashfs (support XATTR which may allow it to boot with SELinux); only supported with -o
+	-k | --kernel imagename
+		Copy this kernel (program assumes you have the kernel in the right location)
+	-t | --title Software Title (Defaults to \"$grubtitledefault\")
+		Copy this kernel (program assumes you have the kernel in the right location)
+	-p | --producttype name 
+		Creates a Directory in Grub for OS Type (Defaults to \"$producttypeedefault\")
+	-q | --quick 
+		Skips making squash or initrd for memdisk (assumes already made from previous run); useful for making changes to the code
+	-y | --yum 
+		Makes initrd using yum (broken, don't use)
+	-h | --help
+		This Help File"				
+}
+
+function yumcommands() {
+	if [[ -d ../temp ]]; then
+		rm ../temp -R -f
+	fi
+	mkdir ../temp
+	source ../mkimage-yum.sh -p "kernel vim-minimal vim-common cryptsetup" -t $(pwd)/../temp
+	cp ../rc/rc.local ../temp/etc/rc.d/rc.local
+	chmod +x ../temp/etc/rc.d/rc.local
+	cp modprobe.sh ../temp/modprobe.sh
+	cp init ../temp/init
+	pushd ../temp
+	find . | cpio --null -ov --format=newc | gzip -9 > ../grub-overlay/boot/$producttype/initramfs.gz
+	popd	
 }
 
 function buildInitOverlay() {
@@ -138,6 +156,9 @@ if [ $# -gt 0 ]; then
 					;;
 			-q | --quick)
 					skipmakingsquash=1
+					;;
+			-y | --yum)
+					useyum=1
 					;;
                         -h | --help )   usage
                                         exit 1
@@ -248,7 +269,25 @@ elif [ "$useguestfish" -eq 0 ]; then
 	mv init overlayfs -f
 	pushd overlayfs
 	mkdir -p ../grub-overlay/boot/$producttype
-	dracut -i $(pwd)/../rc/rc.local /etc/rc.d/rc.local -i $(pwd)/modprobe.sh modprobe.sh -i $(pwd)/init myinit -i $(pwd)/bin/busybox usr/bin/busybox ../grub-overlay/boot/$producttype/initramfs.gz -f
+	if [ $useyum -eq 0 ]; then
+		if [ -d temp ]; then
+			rm temp -R -f
+		fi
+		mkdir temp
+		pwd
+		dracut -i $(pwd)/../rc/rc.local /etc/rc.d/rc.local -i $(pwd)/modprobe.sh modprobe.sh -i /bin/chmod /bin/chmod -i $(pwd)/init myinit temp/initramfs.gz -f
+		pushd temp
+		/usr/lib/dracut/skipcpio initramfs.gz  | gzip -d - | cpio -idv
+		rm initramfs.gz
+		rm init -f
+		mv myinit init
+		find . -print0 | cpio --null -ov --format=newc | gzip -9 > ../../grub-overlay/boot/$producttype/initramfs.gz
+		popd
+		membuild=1
+	else
+		yumcommands
+		membuild=1
+	fi
 	popd
 
 	if [ $usekernel -eq 1 ]; then
@@ -288,7 +327,25 @@ __EOF__
 	chmod +x init
 
 	mkdir -p ../grub-overlay/boot/$producttype
-	dracut -i $(pwd)/../rc/rc.local /etc/rc.d/rc.local -i $(pwd)/modprobe.sh modprobe.sh -i $(pwd)/init myinit -i $(pwd)/bin/busybox usr/bin/busybox ../grub-overlay/boot/$producttype/initramfs.gz -f
+	if [ $useyum -eq 0 ]; then
+		if [ -d temp ]; then
+			rm temp -R -f
+		fi
+		mkdir temp
+		pwd
+		dracut -i $(pwd)/../rc/rc.local /etc/rc.d/rc.local -i $(pwd)/modprobe.sh modprobe.sh -i /bin/chmod /bin/chmod -i $(pwd)/init myinit temp/initramfs.gz -f
+		pushd temp
+		/usr/lib/dracut/skipcpio initramfs.gz  | gzip -d - | cpio -idv
+		rm initramfs.gz
+		rm init -f
+		mv myinit init
+		find . -print0 | cpio --null -ov --format=newc | gzip -9 > ../../grub-overlay/boot/$producttype/initramfs.gz
+		popd
+		membuild=1
+	else
+		yumcommands
+		membuild=1
+	fi
 	popd
 
 	echo -e "\nBuilding ISO"

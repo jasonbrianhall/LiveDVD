@@ -1,7 +1,7 @@
 # This file is meant to be sourced and not ran directly.
 
 	cat << EOF > init
-#!/bin/busybox sh
+#!/bin/bash
 
 # Dump to sh if something fails
 error() {
@@ -22,9 +22,8 @@ EOF
 fi
 
 cat << EOF >> init
-# Populate /bin with binaries from busybox
-/bin/busybox --install /bin || error
 
+mount -t devtmpfs none /dev
 mkdir -p /proc || error
 mount -t proc proc /proc || error
 
@@ -37,9 +36,6 @@ mkdir -p /dev || error
 
 mkdir -p /dev/pts || error
 mount -t devpts devpts /dev/pts || error
-
-# Populate /dev
-mdev -s
 
 mkdir -p /newroot || error
 mount -t tmpfs tmpfs /newroot || error
@@ -115,5 +111,5 @@ EOF
 EOF
 fi
 cat << EOF >> init
-exec switch_root /overlay /sbin/init || error
+exec /sbin/chroot /overlay /sbin/init
 EOF
