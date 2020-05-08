@@ -50,7 +50,9 @@ mkdir -p /overlay || error
 mkdir -p /newroot/upper || error
 mkdir -p /newroot/workdir || error
 
-mount /dev/sr0 /cdroot || error
+#mount /dev/sr0 /cdroot || error
+CDDevice=\`blkid | grep LABEL=\"$CDLABEL\" | awk -F: '{print \$1}'\`
+mount \$CDDevice /cdroot || error
 
 mknod /dev/loop0 b 7 0
 
@@ -59,11 +61,11 @@ EOF
 if [ $luksbuild -eq 1 ]; then
 cat << EOF >> init
 /sbin/cryptsetup luksOpen /cdroot/newroot/encrypted cr_temp || error
-mount /dev/mapper/cr_temp /squash -t squashfs
+mount /dev/mapper/cr_temp /squash -t squashfs || error
 EOF
 else
 cat << EOF >> init
-mount /cdroot/newroot/root.squash /squash -t squashfs
+mount /cdroot/newroot/root.squash /squash -t squashfs || error
 EOF
 fi
 else

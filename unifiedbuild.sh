@@ -17,6 +17,7 @@ productentered=0
 originaldirectory=$(pwd)
 skipmakingsquash=0
 useyum=0
+CDLABELFound=0
 #File Usage
 function usage()
 {
@@ -43,6 +44,8 @@ function usage()
 		Skips making squash or initrd for memdisk (assumes already made from previous run); useful for making changes to the code
 	-y | --yum 
 		Makes initrd using yum (broken, don't use)
+	-V | --cdlabel 
+		CD Label (if undefined, defaults to prodcttype)
 	-h | --help
 		This Help File"				
 }
@@ -151,6 +154,10 @@ if [ $# -gt 0 ]; then
 					find grub-memdisk/* | grep -v "grub" | xargs -I xxx rm xxx -R -f
 					find grub-overlay/* | grep -v "grub" | xargs -I xxx rm xxx -R -f
                                         ;;
+                        -V | --cdlabel )   shift
+					CDLABEL=$1
+					CDLABELFound=1
+					;;
 			-d | --dhcp)
 					skipdhcpscript=1
 					;;
@@ -172,6 +179,10 @@ if [ $# -gt 0 ]; then
 else
 	usage
 	exit 1
+fi
+
+if [ $CDLABELFound -eq 0 ]; then
+	CDLABEL=$producttype
 fi
 
 if [ "$productentered" -eq 0 ] &&  [ "$usekernel" -eq 0 ]; then
@@ -240,7 +251,7 @@ if [ "$membuild" -eq 1 ]; then
 	buildGrub 
 	cp grub.cfg grub-memdisk/boot/grub/grub.cfg -f 
 	echo -e "\nBuilding ISO"
-	grub2-mkrescue -o result/membuild.iso grub-memdisk/
+	grub2-mkrescue -o result/membuild.iso grub-memdisk/ -V $CDLABEL
 	echo -e "\n\nMemdisk Build Complete; saved to result/membuild.iso"
 	unmountOverlay
 elif [ "$useguestfish" -eq 0 ]; then
@@ -295,7 +306,7 @@ elif [ "$useguestfish" -eq 0 ]; then
 	fi
 	buildGrub 
 	cp grub.cfg grub-overlay/boot/grub/grub.cfg -f 
-	grub2-mkrescue -o result/overlay.iso grub-overlay/
+	grub2-mkrescue -o result/overlay.iso grub-overlay/ -V $CDLABEL
 	echo -e "\n\nOverlay Build Complete; saved to result/overlay.iso"
 	unmountOverlay
 else
@@ -356,7 +367,7 @@ __EOF__
 	buildGrub 
 	cp grub.cfg grub-overlay/boot/grub/grub.cfg -f 
 
-	grub2-mkrescue -o result/overlay-gf.iso grub-overlay/
+	grub2-mkrescue -o result/overlay-gf.iso grub-overlay/ -V $CDLABEL
 	echo -e "\n\nOverlay Build Complete Using Guest Fish; saved to result/overlay-gf.iso"
 fi
 
