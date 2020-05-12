@@ -37,7 +37,7 @@ function usage()
 	-k | --kernel imagename
 		Copy this kernel (program assumes you have the kernel in the right location)
 	-t | --title Software Title (Defaults to \"$grubtitledefault\")
-		Copy this kernel (program assumes you have the kernel in the right location)
+		Creates a GRUB Menu Title
 	-p | --producttype name 
 		Creates a Directory in Grub for OS Type (Defaults to \"$producttypeedefault\")
 	-q | --quick 

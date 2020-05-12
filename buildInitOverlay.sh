@@ -17,7 +17,6 @@ ignore() {
 }
 
 
-source ./modprobe.sh || ignore > /dev/null 2> /dev/null
 EOF
 fi
 
@@ -39,6 +38,9 @@ mount -t devpts devpts /dev/pts || error
 
 mkdir -p /newroot || error
 mount -t tmpfs tmpfs /newroot || error
+mount prot /proc -t proc || error
+
+source ./modprobe.sh || ignore > /dev/null 2> /dev/null
 
 EOF
 if [ $overlaybuild -eq 1 ]; then
