@@ -7,6 +7,7 @@ selinuxenabled=0
 useguestfish=0
 luksbuild=0
 usekernel=0
+usekernelversion=0
 rootbuild=0
 grubtitle="Red Hat Enterprise Linux"
 grubtitledefault="Red Hat Enterprise Linux"
@@ -18,6 +19,7 @@ originaldirectory=$(pwd)
 skipmakingsquash=0
 useyum=0
 CDLABELFound=0
+adddriver=0
 #File Usage
 function usage()
 {
@@ -36,6 +38,10 @@ function usage()
 		Mounts a .raw, .qcow2, or other supported image and makes a Squashfs (support XATTR which may allow it to boot with SELinux); only supported with -o
 	-k | --kernel imagename
 		Copy this kernel (program assumes you have the kernel in the right location)
+        -K | --kernelversion imagename
+                Try to use this kernel version with dracut
+	--add-drivers 
+		Add these drivers to dracut
 	-t | --title Software Title (Defaults to \"$grubtitledefault\")
 		Creates a GRUB Menu Title
 	-p | --producttype name 
@@ -144,6 +150,14 @@ if [ $# -gt 0 ]; then
                         -k | --kernel )   shift
                                         usekernel=1
 					kernellocation=$1
+                                        ;;
+                        -K | --kernelversion )   shift
+                                        usekernelversion=1
+                                        kernelversion=$1
+                                        ;;
+                        --add-drivers )   shift
+                                        adddriver=1
+                                        driverdata=$1
                                         ;;
                         -t | --title )   shift
 					grubtitle=$1
@@ -286,7 +300,23 @@ elif [ "$useguestfish" -eq 0 ]; then
 		fi
 		mkdir temp
 		pwd
-		dracut -i $(pwd)/../rc/rc.local /etc/rc.d/rc.local -i $(pwd)/modprobe.sh modprobe.sh -i /bin/chmod /bin/chmod -i $(pwd)/init myinit temp/initramfs.gz -f
+		params="-i $(pwd)/../rc/rc.local /etc/rc.d/rc.local -i $(pwd)/modprobe.sh modprobe.sh -i /bin/chmod /bin/chmod -i $(pwd)/init myinit temp/initramfs.gz -f"
+		if [ $adddriver -eq 1 ]; then
+			#params="--drivers '$driverdata' $params"
+			temp=""
+			for x in $driverdata
+			do
+				temp="$temp -d $x"
+			done
+			params="$temp $params"
+		fi
+		echo "$params"
+		if [ $usekernelversion -eq 0 ]; then
+			dracut $params
+		else
+			params="$params $kernelversion"
+			dracut $params
+		fi
 		pushd temp
 		/usr/lib/dracut/skipcpio initramfs.gz  | gzip -d - | cpio -idv
 		rm initramfs.gz
@@ -300,7 +330,7 @@ elif [ "$useguestfish" -eq 0 ]; then
 		membuild=1
 	fi
 	popd
-
+	echo "Before usekernel"
 	if [ $usekernel -eq 1 ]; then
 		cp $kernellocation grub-overlay/boot/$producttype/vmlinuz
 	fi
@@ -344,7 +374,25 @@ __EOF__
 		fi
 		mkdir temp
 		pwd
-		dracut -i $(pwd)/../rc/rc.local /etc/rc.d/rc.local -i $(pwd)/modprobe.sh modprobe.sh -i /bin/chmod /bin/chmod -i $(pwd)/init myinit temp/initramfs.gz -f
+
+		params="-i $(pwd)/../rc/rc.local /etc/rc.d/rc.local -i $(pwd)/modprobe.sh modprobe.sh -i /bin/chmod /bin/chmod -i $(pwd)/init myinit temp/initramfs.gz -f"
+		if [ $adddriver -eq 1 ]; then
+			#params="--drivers '$driverdata' $params"
+			temp=""
+			for x in $driverdata
+			do
+				temp="$temp -d $x"
+			done
+			params="$temp $params"
+		fi
+		echo "$params"
+		if [ $usekernelversion -eq 0 ]; then
+			dracut $params
+		else
+			params="$params $kernelversion"
+			dracut $params
+		fi
+
 		pushd temp
 		/usr/lib/dracut/skipcpio initramfs.gz  | gzip -d - | cpio -idv
 		rm initramfs.gz
@@ -360,11 +408,10 @@ __EOF__
 	popd
 
 	echo -e "\nBuilding ISO"
-
 	if [ $usekernel -eq 1 ]; then
 		cp $kernellocation grub-overlay/boot/$producttype/vmlinuz
 	fi
-	buildGrub 
+	buildGrub :q
 	cp grub.cfg grub-overlay/boot/grub/grub.cfg -f 
 
 	grub2-mkrescue -o result/overlay-gf.iso grub-overlay/ -V $CDLABEL
