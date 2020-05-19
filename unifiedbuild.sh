@@ -51,7 +51,7 @@ function usage()
 	-y | --yum 
 		Makes initrd using yum (broken, don't use)
 	-V | --cdlabel 
-		CD Label (if undefined, defaults to prodcttype)
+		CD Label (if undefined, defaults to product type)
 	-h | --help
 		This Help File"				
 }

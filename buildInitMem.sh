@@ -4,7 +4,7 @@ cat << EOF > init
 # Dump to sh if something fails
 error() {
 	echo "Jumping into the shell..."
-	setsid cttyhack sh
+	exit 1
 }
 
 
