@@ -20,6 +20,7 @@ skipmakingsquash=0
 useyum=0
 CDLABELFound=0
 adddriver=0
+initrd=0
 #File Usage
 function usage()
 {
@@ -52,6 +53,8 @@ function usage()
 		Makes initrd using yum (broken, don't use)
 	-V | --cdlabel 
 		CD Label (if undefined, defaults to product type)
+	-i | --initrd
+	        Use this initrd (defaults to rebuilding it based on the current kernel which will break things if the initrd doesn't match)
 	-h | --help
 		This Help File"				
 }
@@ -181,7 +184,11 @@ if [ $# -gt 0 ]; then
 			-y | --yum)
 					useyum=1
 					;;
-                        -h | --help )   usage
+			-i | --initrd)  shift
+				        initrd=$1
+					initrdfound=1
+					;;
+			-h | --help )   usage
                                         exit 1
                                         ;;
                         * )             usage
@@ -312,10 +319,18 @@ elif [ "$useguestfish" -eq 0 ]; then
 		fi
 		echo "$params"
 		if [ $usekernelversion -eq 0 ]; then
-			dracut $params
+			if [ $initrdfound -eq 0 ]; then
+				dracut $params
+			else
+				cp $initrd initramfs.gz
+			fi
 		else
 			params="$params $kernelversion"
-			dracut $params
+                        if [ $initrdfound -eq 0 ]; then
+				dracut $params
+			else
+				cp $initrd initramfs.gz
+			fi
 		fi
 		pushd temp
 		/usr/lib/dracut/skipcpio initramfs.gz  | gzip -d - | cpio -idv
